@@ -1,13 +1,13 @@
 {
   "name": "ecommerce-catalog",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "E-commerce catalog with nested schema, aggregation and stock management",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Kirti Sharma",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
