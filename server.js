@@ -5,14 +5,19 @@ const Product = require("./models/Product");
 const app = express();
 app.use(express.json());
 
-mongoose.connect("mongodb+srv://kirtisharma:kirti123@cluster0.rkjhltf.mongodb.net/ecommerceDB")
+// Use environment variable for MongoDB
+mongoose.connect(process.env.MONGO_URI)
 .then(() => console.log("MongoDB Connected"))
 .catch(err => console.log(err));
 
-/* ===============================
-   STEP 5 → Add Product
-================================= */
+// Root route (for live demo check)
+app.get("/", (req, res) => {
+  res.send("E-commerce Catalog API is Live 🚀");
+});
 
+/* ===============================
+   Add Product
+================================= */
 app.post("/products", async (req, res) => {
   try {
     const product = await Product.create(req.body);
@@ -23,14 +28,14 @@ app.post("/products", async (req, res) => {
 });
 
 /* ===============================
-   STEP 6 → Add Review + Update avgRating
+   Add Review + Update avgRating
 ================================= */
-
 app.post("/products/:id/review", async (req, res) => {
   try {
     const { rating, comment, userId } = req.body;
 
     const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ error: "Product not found" });
 
     product.reviews.push({ rating, comment, userId });
 
@@ -38,37 +43,41 @@ app.post("/products/:id/review", async (req, res) => {
     product.avgRating = total / product.reviews.length;
 
     await product.save();
-
     res.json(product);
+
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
 /* ===============================
-   STEP 7 → Aggregation (Low Stock)
+   Aggregation → Low Stock
 ================================= */
-
 app.get("/low-stock", async (req, res) => {
-  const products = await Product.aggregate([
-    { $unwind: "$variants" },
-    { $match: { "variants.stock": { $lt: 10 } } },
-    {
-      $group: {
-        _id: "$_id",
-        name: { $first: "$name" },
-        lowStockVariants: { $push: "$variants" }
+  try {
+    const products = await Product.aggregate([
+      { $unwind: "$variants" },
+      { $match: { "variants.stock": { $lt: 10 } } },
+      {
+        $group: {
+          _id: "$_id",
+          name: { $first: "$name" },
+          lowStockVariants: { $push: "$variants" }
+        }
       }
-    }
-  ]);
+    ]);
 
-  res.json(products);
+    res.json(products);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 /* ===============================
    Server Start
 ================================= */
+const PORT = process.env.PORT || 3000;
 
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
